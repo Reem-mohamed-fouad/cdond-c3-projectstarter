@@ -95,7 +95,7 @@ jobs:
             npm audit --audit-level=critical
  deploy-infrastructure:
     docker:
-      cimg/base:stable
+      - image: cimg/base:stable
     steps:
       - checkout
       - install_awscli
