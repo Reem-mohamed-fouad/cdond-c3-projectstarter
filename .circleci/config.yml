@@ -40,7 +40,6 @@ commands:
             sudo n 13.8.0
     install_pm2:
       description: Install pm2
-        - run:
           name: "Install PM2 Globally"
           npm:
           name: pm2
