@@ -16,6 +16,37 @@ commands:
             name: Install Ansible
             command: |
               python3 -m pip install --user ansible
+    install_ansible:
+      description: Install Ansible
+      steps:
+        - run:
+          name: Install Ansible
+          command: |
+            sudo apt update
+            sudo apt install software-properties-common -y
+            sudo add-apt-repository --yes --update ppa:ansible/ansible
+            sudo apt install ansible -y
+    install_nodejs:
+      description: Install Node.js 13
+      steps:
+        - run:
+          name: Install Node.js 13
+          command: |
+            # Install Node.js LTS version as our base Node.js version
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+            sudo apt install -y nodejs
+            # Use n version manager to use Node.js v13.8.0
+            sudo npm install --global n
+            sudo n 13.8.0
+    install_pm2:
+      description: Install pm2
+        - run:
+          name: "Install PM2 Globally"
+          npm:
+          name: pm2
+          global: yes
+
+       
     destroy-environment:
       description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
       parameters:
@@ -165,7 +196,25 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment
-  
+
+  configure-infrastructure:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - install_awscli
+      - install_ansible
+      - add_ssh_keys:
+          fingerprints: ["d5:a4:0d:bd:36:a7:d2:03:2c:10:93:6a:7c:d1:a7:26"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Configure Server
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt configure-server.yml
+      - destroy-environment
 workflows:
   default:
     jobs:
@@ -184,3 +233,5 @@ workflows:
           filters:
             branches:
               only: [master]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
